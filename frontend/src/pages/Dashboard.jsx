@@ -47,11 +47,14 @@ const Dashboard = () => {
         api.get('/planning/production/'),
       ])
 
+      const productList = products.data.results || products.data || []
+      const planList = plans.data.results || plans.data || []
+
       setStats({
-        totalProducts: products.data.length || 0,
-        lowStockProducts: products.data.filter(p => p.needs_restock).length || 0,
-        activeProductionPlans: plans.data.results?.filter(p => p.status === 'in_progress').length || 0,
-        completedOrders: plans.data.results?.filter(p => p.status === 'completed').length || 0,
+        totalProducts: productList.length,
+        lowStockProducts: productList.filter(p => p.needs_restock).length,
+        activeProductionPlans: planList.filter(p => p.status === 'in_progress').length,
+        completedOrders: planList.filter(p => p.status === 'completed').length,
       })
     } catch (error) {
       console.error('Failed to load dashboard data:', error)

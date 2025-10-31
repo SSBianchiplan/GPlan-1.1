@@ -31,7 +31,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         if active is not None:
             queryset = queryset.filter(active=active.lower() == 'true')
         if needs_restock:
-            queryset = [p for p in queryset if p.needs_restock]
+            queryset = queryset.filter(current_stock__lte=models.F('minimum_stock'))
         
         return queryset
     
@@ -47,9 +47,17 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def inventory_value(self, request):
         """Calculate total inventory value"""
-        products = Product.objects.all()
-        total_value = sum(p.total_value for p in products)
-        return Response({'total_inventory_value': total_value})
+        from django.db.models import Sum, F, DecimalField
+        from django.db.models.functions import Coalesce
+        
+        result = Product.objects.aggregate(
+            total=Coalesce(
+                Sum(F('current_stock') * F('unit_cost'), output_field=DecimalField()),
+                0
+            )
+        )
+        return Response({'total_inventory_value': result['total']})
+
 
 
 class StockMovementViewSet(viewsets.ModelViewSet):

@@ -23,7 +23,9 @@ export const AuthProvider = ({ children }) => {
       setUser(response.data)
     } catch (error) {
       console.error('Failed to load user:', error)
-      logout()
+      if (error.authFailed) {
+        logout()
+      }
     } finally {
       setLoading(false)
     }

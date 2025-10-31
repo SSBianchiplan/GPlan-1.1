@@ -45,8 +45,11 @@ api.interceptors.response.use(
       } catch (refreshError) {
         localStorage.removeItem('token')
         localStorage.removeItem('refreshToken')
-        window.location.href = '/login'
-        return Promise.reject(refreshError)
+        // Let the application handle the redirect through AuthContext
+        return Promise.reject({ 
+          ...refreshError, 
+          authFailed: true 
+        })
       }
     }
 
