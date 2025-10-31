@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
+// eslint-disable-next-line no-unused-vars
 const DashboardCard = ({ title, description, icon: Icon, to, stats, color = 'blue' }) => {
   const colorClasses = {
     blue: 'bg-blue-50 text-blue-600 hover:bg-blue-100',
