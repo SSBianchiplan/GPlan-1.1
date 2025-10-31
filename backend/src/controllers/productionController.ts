@@ -30,9 +30,9 @@ export class ProductionController {
     try {
       const { status, page = 1, limit = 10 } = req.query;
 
-      const where: any = {};
+      const where: { status?: string } = {};
       if (status) {
-        where.status = status;
+        where.status = status as string;
       }
 
       const plans = await prisma.productionPlan.findMany({
@@ -151,9 +151,9 @@ export class ProductionController {
     try {
       const { status, priority, page = 1, limit = 10 } = req.query;
 
-      const where: any = {};
-      if (status) where.status = status;
-      if (priority) where.priority = priority;
+      const where: { status?: string; priority?: string } = {};
+      if (status) where.status = status as string;
+      if (priority) where.priority = priority as string;
 
       const orders = await prisma.productionOrder.findMany({
         where,
@@ -193,7 +193,7 @@ export class ProductionController {
       const { id } = req.params;
       const { status } = req.body;
 
-      const data: any = { status };
+      const data: { status: string; completedDate?: Date } = { status };
       if (status === 'COMPLETED') {
         data.completedDate = new Date();
       }

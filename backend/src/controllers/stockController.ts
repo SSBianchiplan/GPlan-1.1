@@ -32,8 +32,14 @@ export class StockController {
     try {
       const { category, active, page = 1, limit = 10, search } = req.query;
 
-      const where: any = {};
-      if (category) where.category = category;
+      interface WhereClause {
+        category?: string;
+        active?: boolean;
+        OR?: Array<{ code?: { contains: string; mode: 'insensitive' }; name?: { contains: string; mode: 'insensitive' } }>;
+      }
+
+      const where: WhereClause = {};
+      if (category) where.category = category as string;
       if (active !== undefined) where.active = active === 'true';
       if (search) {
         where.OR = [
@@ -186,9 +192,9 @@ export class StockController {
     try {
       const { productId, type, page = 1, limit = 10 } = req.query;
 
-      const where: any = {};
-      if (productId) where.productId = productId;
-      if (type) where.type = type;
+      const where: { productId?: string; type?: string } = {};
+      if (productId) where.productId = productId as string;
+      if (type) where.type = type as string;
 
       const movements = await prisma.stockMovement.findMany({
         where,
@@ -224,15 +230,12 @@ export class StockController {
 
   async getLowStockProducts(req: AuthRequest, res: Response) {
     try {
-      const products = await prisma.product.findMany({
-        where: {
-          active: true,
-          currentStock: {
-            lte: prisma.product.fields.minStock,
-          },
-        },
-        orderBy: { currentStock: 'asc' },
-      });
+      // Use raw query to compare currentStock with minStock
+      const products = await prisma.$queryRaw<any[]>`
+        SELECT * FROM products
+        WHERE active = true AND "currentStock" <= "minStock"
+        ORDER BY "currentStock" ASC
+      `;
 
       return res.json(products);
     } catch (error) {

@@ -99,6 +99,14 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((card) => {
           const Icon = card.icon;
+          const colorMap: Record<string, { bg: string; text: string }> = {
+            blue: { bg: 'bg-blue-100', text: 'text-blue-600' },
+            yellow: { bg: 'bg-yellow-100', text: 'text-yellow-600' },
+            green: { bg: 'bg-green-100', text: 'text-green-600' },
+            purple: { bg: 'bg-purple-100', text: 'text-purple-600' },
+          };
+          const colors = colorMap[card.color] || colorMap.blue;
+          
           return (
             <Link
               key={card.title}
@@ -110,8 +118,8 @@ const Dashboard: React.FC = () => {
                   <p className="text-sm text-gray-600 mb-1">{card.title}</p>
                   <p className="text-2xl font-bold text-gray-900">{card.value}</p>
                 </div>
-                <div className={`p-3 rounded-full bg-${card.color}-100`}>
-                  <Icon className={`text-${card.color}-600`} size={24} />
+                <div className={`p-3 rounded-full ${colors.bg}`}>
+                  <Icon className={colors.text} size={24} />
                 </div>
               </div>
             </Link>

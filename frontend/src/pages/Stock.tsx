@@ -15,7 +15,7 @@ const Stock: React.FC = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const params: any = { limit: 20 };
+      const params: Record<string, string | number> = { limit: 20 };
       if (search) {
         params.search = search;
       }
