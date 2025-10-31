@@ -101,6 +101,7 @@ Acesse: `http://localhost:5173`
 
 - Autenticação JWT
 - Senhas com hash bcrypt
+- Rate limiting (proteção contra brute force e DDoS)
 - Controle de acesso por roles (ADMIN, MANAGER, USER, VIEWER)
 - Proteção CORS
 - Headers de segurança com Helmet

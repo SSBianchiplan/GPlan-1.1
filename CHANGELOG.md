@@ -117,6 +117,10 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 - Autenticação JWT
 - Hash de senhas com bcrypt
+- Rate limiting por IP (proteção contra brute force e DDoS)
+  - 5 tentativas de login a cada 15 minutos
+  - 10 operações de criação por minuto
+  - 100 requisições gerais a cada 15 minutos
 - Validação de entrada
 - Proteção CORS
 - Headers de segurança

@@ -104,6 +104,10 @@ GPlan-1.1/
 
 - Autenticação via JWT
 - Senhas com hash bcrypt
+- Rate limiting para proteção contra brute force e DDoS
+  - Limitação de tentativas de login (5 por 15 minutos)
+  - Limitação de operações de criação (10 por minuto)
+  - Limitação geral de API (100 requisições por 15 minutos)
 - CORS configurado
 - Helmet para segurança HTTP
 - Validação de entrada

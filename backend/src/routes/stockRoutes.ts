@@ -1,12 +1,16 @@
 import { Router } from 'express';
 import { StockController } from '../controllers/stockController';
 import { authenticate, authorize } from '../middleware/auth';
+import { apiLimiter, createLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 const stockController = new StockController();
 
+// Apply general rate limiting to all routes
+router.use(apiLimiter);
+
 // Products
-router.post('/products', authenticate, authorize('ADMIN', 'MANAGER'), (req, res) =>
+router.post('/products', authenticate, authorize('ADMIN', 'MANAGER'), createLimiter, (req, res) =>
   stockController.createProduct(req, res)
 );
 router.get('/products', authenticate, (req, res) =>
@@ -23,7 +27,7 @@ router.put('/products/:id', authenticate, authorize('ADMIN', 'MANAGER'), (req, r
 );
 
 // Stock Movements
-router.post('/movements', authenticate, authorize('ADMIN', 'MANAGER', 'USER'), (req, res) =>
+router.post('/movements', authenticate, authorize('ADMIN', 'MANAGER', 'USER'), createLimiter, (req, res) =>
   stockController.createStockMovement(req, res)
 );
 router.get('/movements', authenticate, (req, res) =>
