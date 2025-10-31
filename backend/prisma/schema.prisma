@@ -1,0 +1,285 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo de Usuários
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(USER)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  productionPlans      ProductionPlan[]
+  stockMovements       StockMovement[]
+  productionOrders     ProductionOrder[]
+  purchaseOrders       PurchaseOrder[]
+  salesOrders          SalesOrder[]
+  auditLogs            AuditLog[]
+  createdOccurrences   Occurrence[]      @relation("OccurrenceCreator")
+  assignedOccurrences  Occurrence[]      @relation("OccurrenceAssignee")
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  USER
+  VIEWER
+}
+
+// ============================================
+// MÓDULO: PLANEJAMENTO DE PRODUÇÃO
+// ============================================
+
+model ProductionPlan {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  status      PlanStatus @default(DRAFT)
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user            User              @relation(fields: [userId], references: [id])
+  productionOrders ProductionOrder[]
+
+  @@map("production_plans")
+}
+
+enum PlanStatus {
+  DRAFT
+  APPROVED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model ProductionOrder {
+  id              String   @id @default(uuid())
+  orderNumber     String   @unique
+  productionPlanId String?
+  productId       String
+  quantity        Int
+  priority        Priority @default(NORMAL)
+  status          OrderStatus @default(PENDING)
+  scheduledDate   DateTime
+  completedDate   DateTime?
+  userId          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  productionPlan  ProductionPlan? @relation(fields: [productionPlanId], references: [id])
+  product         Product         @relation(fields: [productId], references: [id])
+  user            User            @relation(fields: [userId], references: [id])
+
+  @@map("production_orders")
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum OrderStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// ============================================
+// MÓDULO: CONTROLE DE ESTOQUE
+// ============================================
+
+model Product {
+  id              String   @id @default(uuid())
+  code            String   @unique
+  name            String
+  description     String?
+  category        String
+  unit            String
+  minStock        Int      @default(0)
+  maxStock        Int?
+  currentStock    Int      @default(0)
+  unitPrice       Float    @default(0)
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  stockMovements   StockMovement[]
+  productionOrders ProductionOrder[]
+  purchaseOrderItems PurchaseOrderItem[]
+  salesOrderItems    SalesOrderItem[]
+
+  @@map("products")
+}
+
+model StockMovement {
+  id          String   @id @default(uuid())
+  productId   String
+  type        MovementType
+  quantity    Int
+  reference   String?
+  notes       String?
+  userId      String
+  createdAt   DateTime @default(now())
+
+  product     Product  @relation(fields: [productId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("stock_movements")
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  TRANSFER
+}
+
+// ============================================
+// MÓDULO: GESTÃO COMERCIAL
+// ============================================
+
+model PurchaseOrder {
+  id              String   @id @default(uuid())
+  orderNumber     String   @unique
+  supplier        String
+  status          OrderStatus @default(PENDING)
+  orderDate       DateTime
+  expectedDate    DateTime?
+  receivedDate    DateTime?
+  totalAmount     Float    @default(0)
+  userId          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User              @relation(fields: [userId], references: [id])
+  items           PurchaseOrderItem[]
+
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              String   @id @default(uuid())
+  purchaseOrderId String
+  productId       String
+  quantity        Int
+  unitPrice       Float
+  totalPrice      Float
+
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product         Product       @relation(fields: [productId], references: [id])
+
+  @@map("purchase_order_items")
+}
+
+model SalesOrder {
+  id              String   @id @default(uuid())
+  orderNumber     String   @unique
+  customer        String
+  status          OrderStatus @default(PENDING)
+  orderDate       DateTime
+  deliveryDate    DateTime?
+  totalAmount     Float    @default(0)
+  userId          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User              @relation(fields: [userId], references: [id])
+  items           SalesOrderItem[]
+
+  @@map("sales_orders")
+}
+
+model SalesOrderItem {
+  id              String   @id @default(uuid())
+  salesOrderId    String
+  productId       String
+  quantity        Int
+  unitPrice       Float
+  totalPrice      Float
+
+  salesOrder      SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  product         Product    @relation(fields: [productId], references: [id])
+
+  @@map("sales_order_items")
+}
+
+// ============================================
+// MÓDULO: GESTÃO DE OCORRÊNCIAS E AUDITORIAS
+// ============================================
+
+model Occurrence {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  type        OccurrenceType
+  severity    Severity @default(MEDIUM)
+  status      OccurrenceStatus @default(OPEN)
+  createdById String
+  assignedToId String?
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy   User     @relation("OccurrenceCreator", fields: [createdById], references: [id])
+  assignedTo  User?    @relation("OccurrenceAssignee", fields: [assignedToId], references: [id])
+
+  @@map("occurrences")
+}
+
+enum OccurrenceType {
+  QUALITY
+  SAFETY
+  MAINTENANCE
+  OPERATIONAL
+  OTHER
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum OccurrenceStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String
+  action      String
+  entity      String
+  entityId    String?
+  changes     String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
